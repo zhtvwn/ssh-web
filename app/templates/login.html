@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>登录 - SSH 在线平台</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+</head>
+<body class="login-body">
+<div class="login-card">
+    <div class="login-brand">
+        <span class="brand-logo big">&gt;_</span>
+        <h1>SSH 在线运维平台</h1>
+    </div>
+    {% if error %}<div class="flash flash-error">{{ error }}</div>{% endif %}
+    <form method="post" class="form">
+        <label class="field">
+            <span>用户名</span>
+            <input type="text" name="username" autocomplete="username" required autofocus>
+        </label>
+        <label class="field">
+            <span>密码</span>
+            <input type="password" name="password" autocomplete="current-password" required>
+        </label>
+        <label class="checkbox">
+            <input type="checkbox" name="remember"> 记住登录状态
+        </label>
+        <button class="btn btn-primary btn-block" type="submit">登 录</button>
+    </form>
+</div>
+</body>
+</html>

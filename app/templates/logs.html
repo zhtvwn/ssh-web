@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% block title %}审计日志 - {{ app_name }}{% endblock %}
+{% block page_title %}审计日志{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header card-header-flex">
+        <span>操作记录</span>
+        <form class="inline-search" method="get">
+            <input type="text" name="q" value="{{ keyword }}" placeholder="搜索命令 / 主机">
+            <select name="source" onchange="this.form.submit()">
+                <option value="">全部类型</option>
+                <option value="connect" {% if source == 'connect' %}selected{% endif %}>建立连接</option>
+                <option value="terminal" {% if source == 'terminal' %}selected{% endif %}>终端输入</option>
+                <option value="quick" {% if source == 'quick' %}selected{% endif %}>快速执行</option>
+            </select>
+            {% if current_user.is_admin %}
+            <select name="user" onchange="this.form.submit()">
+                <option value="">全部用户</option>
+                {% for u in users %}<option value="{{ u.id }}" {% if user_filter == u.id %}selected{% endif %}>{{ u.username }}</option>{% endfor %}
+            </select>
+            {% endif %}
+            <button class="btn btn-ghost" type="submit">筛选</button>
+        </form>
+    </div>
+    <div class="card-body no-padding">
+        <table class="table">
+            <thead>
+            <tr>
+                <th style="width:150px">时间</th>
+                <th style="width:110px">用户</th>
+                <th style="width:180px">主机</th>
+                <th>命令 / 动作</th>
+                <th style="width:100px">类型</th>
+                <th style="width:90px">结果</th>
+                <th style="width:100px">操作</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for log in logs %}
+            <tr>
+                <td>{{ log.created_at.strftime('%Y-%m-%d %H:%M:%S') if log.created_at else '-' }}</td>
+                <td>{{ log.username }}</td>
+                <td><code>{{ log.host_label or '-' }}</code></td>
+                <td class="cmd-cell" title="{{ log.command }}">{{ log.command }}</td>
+                <td>
+                    {% if log.source == 'connect' %}<span class="badge badge-info">连接</span>
+                    {% elif log.source == 'quick' %}<span class="badge badge-warn">快速执行</span>
+                    {% else %}<span class="badge">终端</span>{% endif %}
+                </td>
+                <td>{% if log.ok %}<span class="badge badge-ok">成功</span>{% else %}<span class="badge badge-danger">失败</span>{% endif %}</td>
+                <td><button class="btn btn-sm btn-ghost" data-log="{{ log.id }}">详情</button></td>
+            </tr>
+            {% else %}
+            <tr><td colspan="7" class="empty">暂无记录</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="card-footer">
+        {% if pagination.pages > 1 %}
+        <div class="pager">
+            {% if pagination.has_prev %}<a class="btn btn-sm btn-ghost" href="{{ url_for('main.logs', page=pagination.prev_num, q=keyword, source=source, user=user_filter) }}">上一页</a>{% endif %}
+            <span class="pager-info">第 {{ pagination.page }} / {{ pagination.pages }} 页（共 {{ pagination.total }} 条）</span>
+            {% if pagination.has_next %}<a class="btn btn-sm btn-ghost" href="{{ url_for('main.logs', page=pagination.next_num, q=keyword, source=source, user=user_filter) }}">下一页</a>{% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="modal" id="modal-log">
+    <div class="modal-mask" data-modal-close></div>
+    <div class="modal-panel modal-lg">
+        <div class="modal-header">命令执行详情<button class="modal-close" data-modal-close>×</button></div>
+        <div class="modal-body">
+            <table class="table">
+                <tr><th style="width:100px">用户</th><td id="log-user"></td></tr>
+                <tr><th>主机</th><td id="log-host"></td></tr>
+                <tr><th>时间</th><td id="log-time"></td></tr>
+                <tr><th>类型</th><td id="log-source"></td></tr>
+                <tr><th>命令</th><td><pre class="cmd-code" id="log-command"></pre></td></tr>
+            </table>
+            <div class="log-output-title">输出</div>
+            <pre class="log-output" id="log-output"></pre>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    var baseUrl = '{{ url_for('main.log_detail', log_id=0) }}'.replace('/0', '/');
+    document.querySelectorAll('[data-log]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            fetch(baseUrl + btn.getAttribute('data-log')).then(function (r) { return r.json(); }).then(function (d) {
+                document.getElementById('log-user').textContent = d.user;
+                document.getElementById('log-host').textContent = d.host || '-';
+                document.getElementById('log-time').textContent = d.created_at;
+                document.getElementById('log-source').textContent = {connect: '建立连接', quick: '快速执行', terminal: '终端输入'}[d.source] || d.source;
+                document.getElementById('log-command').textContent = d.command;
+                document.getElementById('log-output').textContent = d.output || '（无输出）';
+                openModal('modal-log');
+            });
+        });
+    });
+</script>
+{% endblock %}

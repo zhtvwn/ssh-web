@@ -1,0 +1,22 @@
+services:
+  ssh-web:
+    build: .
+    image: ssh-online:latest
+    container_name: ssh-online
+    restart: unless-stopped
+    ports:
+      - "${WEB_PORT:-5000}:5000"
+    environment:
+      TZ: Asia/Shanghai
+      # 务必修改：SECRET_KEY 同时用于会话签名与主机凭据加密，变更后将无法解密已有主机密码
+      SECRET_KEY: ${SECRET_KEY:-please-change-this-secret-key}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin123}
+      SSH_CONNECT_TIMEOUT: ${SSH_CONNECT_TIMEOUT:-10}
+      SSH_COMMAND_TIMEOUT: ${SSH_COMMAND_TIMEOUT:-60}
+      MAX_AUDIT_LOGS: ${MAX_AUDIT_LOGS:-5000}
+    volumes:
+      - ssh-data:/app/data
+
+volumes:
+  ssh-data:

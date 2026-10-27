@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% block title %}用户管理 - {{ app_name }}{% endblock %}
+{% block page_title %}用户管理{% endblock %}
+{% block topbar_actions %}
+    <button class="btn btn-primary" data-modal-open="modal-user-create">+ 新增用户</button>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">账号列表（{{ users|length }}）</div>
+    <div class="card-body no-padding">
+        <table class="table">
+            <thead>
+            <tr>
+                <th>用户名</th>
+                <th>角色</th>
+                <th>状态</th>
+                <th>主机数</th>
+                <th>备注</th>
+                <th>最近登录</th>
+                <th style="width: 300px">操作</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for u in users %}
+            <tr>
+                <td class="cell-strong">{{ u.username }}{% if u.id == current_user.id %} <span class="badge badge-info">当前</span>{% endif %}</td>
+                <td>{% if u.is_admin %}<span class="badge badge-warn">管理员</span>{% else %}<span class="badge">普通用户</span>{% endif %}</td>
+                <td>{% if u.active %}<span class="badge badge-ok">启用</span>{% else %}<span class="badge badge-danger">禁用</span>{% endif %}</td>
+                <td>{{ u.hosts.count() }}</td>
+                <td>{{ u.remark or '-' }}</td>
+                <td>{{ u.last_login_at.strftime('%Y-%m-%d %H:%M') if u.last_login_at else '从未登录' }}</td>
+                <td class="ops">
+                    <button class="btn btn-sm btn-ghost"
+                            data-modal-open="modal-user-edit"
+                            data-id="{{ u.id }}"
+                            data-username="{{ u.username }}"
+                            data-role="{{ u.role }}"
+                            data-remark="{{ u.remark or '' }}"
+                            data-active="{{ '1' if u.active else '' }}">编辑</button>
+                    <button class="btn btn-sm btn-ghost"
+                            data-modal-open="modal-user-reset"
+                            data-id="{{ u.id }}"
+                            data-username="{{ u.username }}">重置密码</button>
+                    <form method="post" action="{{ url_for('main.user_update', user_id=u.id) }}" class="inline">
+                        <input type="hidden" name="action" value="toggle_active">
+                        <button class="btn btn-sm btn-ghost" type="submit">{{ '禁用' if u.active else '启用' }}</button>
+                    </form>
+                    <form method="post" action="{{ url_for('main.user_delete', user_id=u.id) }}" class="inline"
+                          data-confirm="确认删除用户「{{ u.username }}」？该操作不可恢复。">
+                        <button class="btn btn-sm btn-danger" type="submit">删除</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="modal" id="modal-user-create">
+    <div class="modal-mask" data-modal-close></div>
+    <div class="modal-panel">
+        <div class="modal-header">新增用户<button class="modal-close" data-modal-close>×</button></div>
+        <form method="post" class="modal-body form">
+            <label class="field"><span>用户名</span><input name="username" required></label>
+            <label class="field"><span>初始密码</span><input type="password" name="password" required></label>
+            <label class="field">
+                <span>角色</span>
+                <select name="role">
+                    <option value="user">普通用户</option>
+                    <option value="admin">管理员</option>
+                </select>
+            </label>
+            <label class="field"><span>备注</span><input name="remark"></label>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-ghost" data-modal-close>取消</button>
+                <button class="btn btn-primary" type="submit">创建</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="modal" id="modal-user-edit">
+    <div class="modal-mask" data-modal-close></div>
+    <div class="modal-panel">
+        <div class="modal-header">编辑用户<button class="modal-close" data-modal-close>×</button></div>
+        <form method="post" class="modal-body form" id="form-user-edit">
+            <input type="hidden" name="action" value="profile">
+            <label class="field"><span>用户名</span><input name="username" required></label>
+            <label class="field">
+                <span>角色</span>
+                <select name="role">
+                    <option value="user">普通用户</option>
+                    <option value="admin">管理员</option>
+                </select>
+            </label>
+            <label class="field"><span>备注</span><input name="remark"></label>
+            <label class="checkbox"><input type="checkbox" name="active"> 启用该账号</label>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-ghost" data-modal-close>取消</button>
+                <button class="btn btn-primary" type="submit">保存</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="modal" id="modal-user-reset">
+    <div class="modal-mask" data-modal-close></div>
+    <div class="modal-panel">
+        <div class="modal-header">重置密码<button class="modal-close" data-modal-close>×</button></div>
+        <form method="post" class="modal-body form" id="form-user-reset">
+            <input type="hidden" name="action" value="reset_password">
+            <p class="hint">将重置用户 <b id="reset-username"></b> 的密码。</p>
+            <label class="field"><span>新密码</span><input type="password" name="password" required></label>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-ghost" data-modal-close>取消</button>
+                <button class="btn btn-primary" type="submit">确认重置</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>bindUserModals();</script>
+{% endblock %}

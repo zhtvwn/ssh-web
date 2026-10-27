@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}Web 终端 - {{ app_name }}{% endblock %}
+{% block page_title %}Web 终端{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='vendor/xterm.css') }}">
+{% endblock %}
+
+{% block topbar_actions %}
+<span class="status" id="status" data-state="idle"><i></i><span id="status-text">未连接</span></span>
+{% endblock %}
+
+{% block content %}
+<div class="term-wrap">
+    <div class="term-main">
+        <div class="term-toolbar">
+            <select id="hostSelect" class="select">
+                {% for h in hosts %}
+                <option value="{{ h.id }}" {% if h.id == host_id %}selected{% endif %}>{{ h.name }} — {{ h.endpoint }}</option>
+                {% else %}
+                <option value="">暂无可用主机，请先到「主机管理」添加</option>
+                {% endfor %}
+            </select>
+            <button class="btn btn-primary btn-sm" id="btnNew">+ 新建连接</button>
+            <span class="toolbar-split"></span>
+            <button class="btn btn-ghost btn-sm" id="btnReconnect">重连</button>
+            <button class="btn btn-ghost btn-sm" id="btnDisconnect">断开</button>
+            <button class="btn btn-ghost btn-sm" id="btnClear">清屏</button>
+            <span class="toolbar-split"></span>
+            <button class="btn btn-ghost btn-sm" id="btnToggleSide" title="显示/隐藏右侧命令库（Ctrl+Alt+B）">命令库</button>
+            <label class="switch"><input type="checkbox" id="chkSuggest" checked> 输入提示</label>
+            <span class="term-hint">切走菜单/刷新不会断连，回来自动恢复；Tab 补全 / ↑↓ 选择 / Esc 关闭；Ctrl+C 中断，右键粘贴</span>
+        </div>
+
+        <div class="term-tabs">
+            <div class="tab-list" id="tabList"></div>
+            <button class="tab-new" id="btnNewTab" title="新建连接">＋</button>
+        </div>
+
+        <div class="term-stack" id="termStack">
+            <div class="term-empty" id="termEmpty">
+                <div class="term-empty-icon">&gt;_</div>
+                <div>选择左侧主机后点击「新建连接」，可同时打开多个标签连接多台主机</div>
+            </div>
+        </div>
+
+        <div class="exec-panel" id="execPanel" style="display:none">
+            <div class="exec-head">
+                <span id="execTitle">快速执行结果</span>
+                <div>
+                    <button class="btn btn-sm btn-ghost" id="btnExecCopy">复制</button>
+                    <button class="btn btn-sm btn-ghost" id="btnExecClose">收起</button>
+                </div>
+            </div>
+            <pre class="exec-output" id="execOutput"></pre>
+        </div>
+    </div>
+
+    <aside class="term-side" id="termSide">
+        <div class="side-search">
+            <input id="cmdSearch" placeholder="搜索命令，如：磁盘 / docker / tail">
+        </div>
+        <div id="cmdList" class="cmd-list"></div>
+        <div class="side-footer">
+            命令作用于当前激活的标签：点击「插入」写入终端，点击「执行」立即运行并展示输出。<br>
+            终端内输入时会自动提示命令库与历史命令，按 Tab 补全。
+        </div>
+    </aside>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='vendor/xterm.js') }}"></script>
+<script src="{{ url_for('static', filename='vendor/addon-fit.js') }}"></script>
+<script src="{{ url_for('static', filename='vendor/socket.io.min.js') }}"></script>
+<script>
+    window.APP_HOSTS = {{ hosts|tojson }};
+    window.APP_SNIPPETS = {{ snippets|tojson }};
+    window.APP_INIT_HOST = {{ host_id|tojson }};
+    window.APP_AUTO_CONNECT = {{ auto_connect|tojson }};
+</script>
+<script src="{{ url_for('static', filename='js/terminal.js') }}"></script>
+{% endblock %}

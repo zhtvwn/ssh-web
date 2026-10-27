@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}{{ app_name }}{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+    {% block head %}{% endblock %}
+</head>
+<body>
+<div class="layout">
+    <aside class="sidebar">
+        <div class="brand">
+            <span class="brand-logo">&gt;_</span>
+            <div>
+                <div class="brand-name">SSH 在线平台</div>
+                <div class="brand-sub">Web SSH Console</div>
+            </div>
+        </div>
+        <nav class="nav">
+            <a class="nav-item" href="{{ url_for('main.terminal') }}" data-nav="terminal">
+                <span class="ico">🖥</span> Web 终端
+            </a>
+            <a class="nav-item" href="{{ url_for('main.hosts') }}" data-nav="hosts">
+                <span class="ico">🗂</span> 主机管理
+            </a>
+            <a class="nav-item" href="{{ url_for('main.commands') }}" data-nav="commands">
+                <span class="ico">⌨</span> 命令库
+            </a>
+            {% if current_user.is_authenticated and current_user.is_admin %}
+            <a class="nav-item" href="{{ url_for('main.users') }}" data-nav="users">
+                <span class="ico">👥</span> 用户管理
+            </a>
+            {% endif %}
+            <a class="nav-item" href="{{ url_for('main.logs') }}" data-nav="logs">
+                <span class="ico">📜</span> 审计日志
+            </a>
+            <a class="nav-item" href="{{ url_for('auth.profile') }}" data-nav="profile">
+                <span class="ico">⚙</span> 个人设置
+            </a>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="user-chip">
+                <div class="avatar">{{ current_user.username[:1].upper() if current_user.is_authenticated else '?' }}</div>
+                <div class="user-meta">
+                    <div class="user-name">{{ current_user.username if current_user.is_authenticated else '未登录' }}</div>
+                    <div class="user-role">{{ '管理员' if current_user.is_authenticated and current_user.is_admin else '普通用户' }}</div>
+                </div>
+            </div>
+            <a class="btn btn-ghost btn-block" href="{{ url_for('auth.logout') }}">退出登录</a>
+        </div>
+    </aside>
+
+    <div class="main">
+        <header class="topbar">
+            <div class="topbar-title">{% block page_title %}{{ app_name }}{% endblock %}</div>
+            <div class="topbar-right">
+                {% block topbar_actions %}{% endblock %}
+            </div>
+        </header>
+        <main class="content">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="flash-wrap">
+                        {% for category, message in messages %}
+                            <div class="flash flash-{{ category if category != 'message' else 'success' }}">{{ message }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+</div>
+
+<script>
+    window.HOST_UPDATE_URL = "{{ url_for('main.host_update', host_id=0) }}".replace('/0/', '/__ID__/');
+    window.USER_UPDATE_URL = "{{ url_for('main.user_update', user_id=0) }}".replace('/0/', '/__ID__/');
+</script>
+<!-- 通用确认弹窗（不依赖浏览器原生 confirm，避免沙箱环境被拦截） -->
+<div class="modal" id="modal-confirm">
+    <div class="modal-mask" data-modal-close></div>
+    <div class="modal-panel modal-sm">
+        <div class="modal-header">确认操作<button class="modal-close" data-modal-close>×</button></div>
+        <div class="modal-body">
+            <p id="confirmText" class="confirm-text"></p>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-ghost" data-modal-close>取消</button>
+                <button type="button" class="btn btn-danger" id="btnConfirmOk">确认删除</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+
+<script>
+    document.querySelectorAll('.nav-item').forEach(function (el) {
+        if (location.pathname.startsWith(el.getAttribute('href'))) {
+            el.classList.add('active');
+        }
+    });
+</script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

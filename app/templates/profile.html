@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}个人设置 - {{ app_name }}{% endblock %}
+{% block page_title %}个人设置{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 520px;">
+    <div class="card-header">修改密码</div>
+    <div class="card-body">
+        {% if error %}<div class="flash flash-error">{{ error }}</div>{% endif %}
+        {% if message %}<div class="flash flash-success">{{ message }}</div>{% endif %}
+        <form method="post" class="form">
+            <label class="field">
+                <span>原密码</span>
+                <input type="password" name="old_password" required>
+            </label>
+            <label class="field">
+                <span>新密码</span>
+                <input type="password" name="new_password" required>
+            </label>
+            <label class="field">
+                <span>确认新密码</span>
+                <input type="password" name="confirm_password" required>
+            </label>
+            <button class="btn btn-primary" type="submit">保存修改</button>
+        </form>
+    </div>
+</div>
+
+<div class="card" style="max-width: 520px; margin-top: 16px;">
+    <div class="card-header">账号信息</div>
+    <div class="card-body">
+        <table class="table">
+            <tr><th style="width:120px">用户名</th><td>{{ current_user.username }}</td></tr>
+            <tr><th>角色</th><td>{{ '管理员' if current_user.is_admin else '普通用户' }}</td></tr>
+            <tr><th>状态</th><td>{{ '启用' if current_user.active else '禁用' }}</td></tr>
+            <tr><th>备注</th><td>{{ current_user.remark or '-' }}</td></tr>
+            <tr><th>最近登录</th><td>{{ current_user.last_login_at.strftime('%Y-%m-%d %H:%M:%S') if current_user.last_login_at else '-' }}（{{ current_user.last_login_ip or '-' }}）</td></tr>
+        </table>
+    </div>
+</div>
+{% endblock %}

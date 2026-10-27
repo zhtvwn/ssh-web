@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}命令库 - {{ app_name }}{% endblock %}
+{% block page_title %}常用命令库{% endblock %}
+{% block topbar_actions %}
+    <button class="btn btn-primary" data-modal-open="modal-cmd-create">+ 新增命令</button>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header card-header-flex">
+        <span>共 {{ items|length }} 条命令</span>
+        <form class="inline-search" method="get">
+            <input type="text" name="q" value="{{ keyword }}" placeholder="搜索名称 / 命令">
+            <select name="category" onchange="this.form.submit()">
+                <option value="">全部分类</option>
+                {% for c in categories %}<option value="{{ c }}" {% if c == category %}selected{% endif %}>{{ c }}</option>{% endfor %}
+            </select>
+            <button class="btn btn-ghost" type="submit">搜索</button>
+        </form>
+    </div>
+    <div class="card-body">
+        {% set ns = namespace(cat=None) %}
+        {% for item in items %}
+            {% if item.category != ns.cat %}
+                {% set ns.cat = item.category %}
+                {% if not loop.first %}</div>{% endif %}
+                <div class="cmd-group">
+                <div class="cmd-group-title">{{ item.category }} {% if item.builtin %}<span class="badge">内置</span>{% endif %}</div>
+            {% endif %}
+            <div class="cmd-item">
+                <div class="cmd-main">
+                    <div class="cmd-name">
+                        {{ item.name }}
+                        {% if item.dangerous %}<span class="badge badge-danger">高危</span>{% endif %}
+                        {% if not item.builtin %}<span class="badge badge-info">自定义</span>{% endif %}
+                    </div>
+                    <pre class="cmd-code">{{ item.command }}</pre>
+                    {% if item.description %}<div class="cell-sub">{{ item.description }}</div>{% endif %}
+                </div>
+                <div class="cmd-ops">
+                    <button class="btn btn-sm btn-ghost" data-copy="{{ item.command }}">复制</button>
+                    {% if not item.builtin %}
+                    <form method="post" action="{{ url_for('main.command_delete', snippet_id=item.id) }}" class="inline"
+                          data-confirm="确认删除命令「{{ item.name }}」？">
+                        <button class="btn btn-sm btn-danger" type="submit">删除</button>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+        {% if items %}</div>{% endif %}
+    </div>
+</div>
+
+<div class="modal" id="modal-cmd-create">
+    <div class="modal-mask" data-modal-close></div>
+    <div class="modal-panel">
+        <div class="modal-header">新增自定义命令<button class="modal-close" data-modal-close>×</button></div>
+        <form method="post" class="modal-body form">
+            <label class="field"><span>名称</span><input name="name" placeholder="如：查看 Nginx 错误日志" required></label>
+            <label class="field"><span>命令内容</span><textarea name="command" rows="3" required></textarea></label>
+            <div class="grid-2">
+                <label class="field"><span>分类</span><input name="category" value="自定义"></label>
+                <label class="field"><span>说明</span><input name="description"></label>
+            </div>
+            <label class="checkbox"><input type="checkbox" name="dangerous"> 标记为高危命令（红色提醒）</label>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-ghost" data-modal-close>取消</button>
+                <button class="btn btn-primary" type="submit">保存</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>bindCopyButtons();</script>
+{% endblock %}

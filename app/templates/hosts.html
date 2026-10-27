@@ -1,0 +1,295 @@
+{% extends "base.html" %}
+{% block title %}主机管理 - {{ app_name }}{% endblock %}
+{% block page_title %}主机管理{% endblock %}
+{% block topbar_actions %}
+    <input type="file" id="importFile" accept=".json,application/json" hidden>
+    <button class="btn btn-ghost" id="btnImport">导入</button>
+    <button class="btn btn-ghost" id="btnExport">导出</button>
+    <button class="btn btn-primary" data-modal-open="modal-host-create">+ 新增主机</button>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header card-header-flex">
+        <span>主机列表（{{ hosts|length }}）</span>
+        <form class="inline-search" method="get">
+            <input type="text" name="q" value="{{ keyword }}" placeholder="搜索名称 / 地址">
+            <button class="btn btn-ghost" type="submit">搜索</button>
+        </form>
+    </div>
+    <div class="card-body no-padding">
+        <table class="table">
+            <thead>
+            <tr>
+                <th>名称</th>
+                <th>连接地址</th>
+                <th>认证方式</th>
+                <th>归属 / 共享</th>
+                <th>最近使用</th>
+                <th style="width: 260px">操作</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for h in hosts %}
+            <tr>
+                <td>
+                    <div class="cell-strong">{{ h.name }}</div>
+                    <div class="cell-sub">{{ h.remark or '-' }}</div>
+                </td>
+                <td><code>{{ h.endpoint }}</code></td>
+                <td>{{ '密钥' if h.auth_type == 'key' else '密码' }}</td>
+                <td>
+                    {{ h.owner.username if h.owner else '-' }}
+                    {% if h.shared %}<span class="badge badge-info">共享</span>{% endif %}
+                </td>
+                <td>{{ h.last_used_at.strftime('%Y-%m-%d %H:%M') if h.last_used_at else '从未' }}</td>
+                <td class="ops">
+                    <a class="btn btn-sm btn-primary" href="{{ url_for('main.terminal', host=h.id) }}">连接</a>
+                    <button class="btn btn-sm btn-ghost" data-test="{{ h.id }}">测试</button>
+                    {% if current_user.is_admin or h.owner_id == current_user.id %}
+                    <button class="btn btn-sm btn-ghost"
+                            data-modal-open="modal-host-edit"
+                            data-id="{{ h.id }}"
+                            data-name="{{ h.name }}"
+                            data-hostname="{{ h.hostname }}"
+                            data-port="{{ h.port }}"
+                            data-username="{{ h.username }}"
+                            data-auth_type="{{ h.auth_type }}"
+                            data-remark="{{ h.remark or '' }}"
+                            data-shared="{{ '1' if h.shared else '' }}"
+                            data-verify_host_key="{{ '1' if h.verify_host_key else '' }}"
+                            data-can_share="{{ '1' if current_user.is_admin else '' }}">编辑</button>
+                    <form method="post" action="{{ url_for('main.host_delete', host_id=h.id) }}" class="inline"
+                          data-confirm="确认删除主机「{{ h.name }}」？该操作不可恢复。">
+                        <button class="btn btn-sm btn-danger" type="submit">删除</button>
+                    </form>
+                    {% else %}
+                    <span class="cell-sub">共享主机（无管理权限）</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="6" class="empty">暂无主机，点击右上角「新增主机」添加第一台服务器。</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- 新增主机 -->
+<div class="modal" id="modal-host-create">
+    <div class="modal-mask" data-modal-close></div>
+    <div class="modal-panel">
+        <div class="modal-header">新增主机<button class="modal-close" data-modal-close>×</button></div>
+        <form method="post" class="modal-body form" id="form-host-create">
+            <label class="field"><span>名称</span><input name="name" placeholder="如：生产 Web-01" required></label>
+            <div class="grid-2">
+                <label class="field"><span>主机地址</span><input name="hostname" placeholder="192.168.1.10 或域名" required></label>
+                <label class="field"><span>端口</span><input name="port" type="number" value="22"></label>
+            </div>
+            <label class="field"><span>登录用户名</span><input name="username" value="root"></label>
+            <label class="field">
+                <span>认证方式</span>
+                <select name="auth_type" class="auth-select" data-target="create">
+                    <option value="password">密码</option>
+                    <option value="key">SSH 私钥</option>
+                </select>
+            </label>
+            <label class="field auth-field-password" data-group="create"><span>密码</span><input type="password" name="password"></label>
+            <div class="auth-field-key" data-group="create" style="display:none">
+                <label class="field"><span>私钥内容（PEM）</span><textarea name="private_key" rows="5" placeholder="-----BEGIN OPENSSH PRIVATE KEY-----"></textarea></label>
+                <label class="field"><span>私钥口令（可空）</span><input type="password" name="passphrase"></label>
+            </div>
+            <label class="field"><span>备注</span><input name="remark"></label>
+            <label class="checkbox"><input type="checkbox" name="verify_host_key" checked> 校验主机指纹（取消勾选可自动接受变更后的指纹）</label>
+            {% if current_user.is_admin %}
+            <label class="checkbox"><input type="checkbox" name="shared"> 共享给所有用户</label>
+            {% endif %}
+            <div class="modal-footer">
+                <button type="button" class="btn btn-ghost" data-modal-close>取消</button>
+                <button class="btn btn-primary" type="submit">保存</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 编辑主机 -->
+<div class="modal" id="modal-host-edit">
+    <div class="modal-mask" data-modal-close></div>
+    <div class="modal-panel">
+        <div class="modal-header">编辑主机<button class="modal-close" data-modal-close>×</button></div>
+        <form method="post" class="modal-body form" id="form-host-edit">
+            <label class="field"><span>名称</span><input name="name" required></label>
+            <div class="grid-2">
+                <label class="field"><span>主机地址</span><input name="hostname" required></label>
+                <label class="field"><span>端口</span><input name="port" type="number"></label>
+            </div>
+            <label class="field"><span>登录用户名</span><input name="username"></label>
+            <label class="field">
+                <span>认证方式</span>
+                <select name="auth_type" class="auth-select" data-target="edit">
+                    <option value="password">密码</option>
+                    <option value="key">SSH 私钥</option>
+                </select>
+            </label>
+            <label class="field auth-field-password" data-group="edit"><span>新密码（留空表示不修改）</span><input type="password" name="password"></label>
+            <div class="auth-field-key" data-group="edit" style="display:none">
+                <label class="field"><span>新私钥（留空表示不修改）</span><textarea name="private_key" rows="5"></textarea></label>
+                <label class="field"><span>私钥口令</span><input type="password" name="passphrase"></label>
+            </div>
+            <label class="field"><span>备注</span><input name="remark"></label>
+            <label class="checkbox"><input type="checkbox" name="verify_host_key"> 校验主机指纹（取消勾选可自动接受变更后的指纹）</label>
+            <label class="checkbox" id="wrap-shared"><input type="checkbox" name="shared"> 共享给所有用户（仅管理员可设置）</label>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-ghost" data-modal-close>取消</button>
+                <button class="btn btn-primary" type="submit">保存</button>
+            </div>
+        </form>
+    </div>
+</div>
+<!-- 导出主机 -->
+<div class="modal" id="modal-export">
+    <div class="modal-mask" data-modal-close></div>
+    <div class="modal-panel modal-sm">
+        <div class="modal-header">导出主机<button class="modal-close" data-modal-close>×</button></div>
+        <div class="modal-body">
+            <p class="confirm-text" id="exportSummary">将导出当前可见的主机列表（JSON 文件）。</p>
+            <label class="checkbox"><input type="checkbox" id="expSecrets"> 包含密码 / 私钥（明文写入文件，请妥善保管）</label>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-ghost" data-modal-close>取消</button>
+                <button type="button" class="btn btn-primary" id="btnExportGo">导出</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 导入主机 -->
+<div class="modal" id="modal-import">
+    <div class="modal-mask" data-modal-close></div>
+    <div class="modal-panel modal-sm">
+        <div class="modal-header">导入主机<button class="modal-close" data-modal-close>×</button></div>
+        <div class="modal-body">
+            <p class="confirm-text" id="importSummary"></p>
+            <label class="checkbox"><input type="checkbox" id="impOverwrite"> 覆盖已存在的同名主机</label>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-ghost" data-modal-close>取消</button>
+                <button type="button" class="btn btn-primary" id="btnImportGo">导入</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    bindHostModals();
+
+    (function () {
+        var fileInput = document.getElementById('importFile');
+        var pending = null;
+
+        document.getElementById('btnExport').addEventListener('click', function () {
+            document.getElementById('exportSummary').textContent =
+                '将导出当前可见的 {{ hosts|length }} 台主机（JSON 文件）。';
+            openModal('modal-export');
+        });
+        document.getElementById('btnExportGo').addEventListener('click', function () {
+            var withSecrets = document.getElementById('expSecrets').checked;
+            closeModal('modal-export');
+            var goBtn = document.getElementById('btnExportGo');
+            goBtn.disabled = true;
+            // 用 fetch + Blob 触发下载，避免预览/沙箱环境下直接跳转无反应
+            fetch('{{ url_for('main.host_export') }}' + (withSecrets ? '?secrets=1' : ''))
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    var list = data.hosts || [];
+                    var text = JSON.stringify(data, null, 2);
+                    var name = 'hosts-' + new Date().toISOString().slice(0, 10).replace(/-/g, '') + '.json';
+                    var blob = new Blob([text], {type: 'application/json'});
+                    var url = URL.createObjectURL(blob);
+                    var a = document.createElement('a');
+                    a.href = url;
+                    a.download = name;
+                    document.body.appendChild(a);
+                    a.click();
+                    setTimeout(function () {
+                        URL.revokeObjectURL(url);
+                        a.remove();
+                    }, 1500);
+                    toast('已导出 ' + list.length + ' 台主机 → ' + name, 'success');
+                })
+                .catch(function () {
+                    toast('导出失败，请重试', 'error');
+                })
+                .finally(function () { goBtn.disabled = false; });
+        });
+
+        document.getElementById('btnImport').addEventListener('click', function () {
+            fileInput.value = '';
+            fileInput.click();
+        });
+        fileInput.addEventListener('change', function () {
+            var file = fileInput.files && fileInput.files[0];
+            if (!file) return;
+            var reader = new FileReader();
+            reader.onload = function () {
+                try {
+                    var data = JSON.parse(reader.result);
+                    var list = Array.isArray(data) ? data : data.hosts;
+                    if (!Array.isArray(list) || !list.length) throw new Error('缺少 hosts 列表');
+                    pending = list;
+                    var withSecrets = list.filter(function (h) {
+                        return h && (h.password || h.private_key);
+                    }).length;
+                    document.getElementById('importSummary').textContent =
+                        '共 ' + list.length + ' 台主机' +
+                        (withSecrets ? '（含 ' + withSecrets + ' 条凭据）'
+                                     : '（不含凭据，导入后需补充密码/私钥）');
+                    openModal('modal-import');
+                } catch (e) {
+                    toast('文件解析失败：' + e.message, 'error');
+                }
+            };
+            reader.readAsText(file);
+        });
+        document.getElementById('btnImportGo').addEventListener('click', function () {
+            var btn = document.getElementById('btnImportGo');
+            btn.disabled = true;
+            fetch('{{ url_for('main.host_import') }}', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({hosts: pending, overwrite: document.getElementById('impOverwrite').checked})
+            }).then(function (r) { return r.json(); }).then(function (data) {
+                closeModal('modal-import');
+                if (!data.ok) {
+                    toast(data.message || '导入失败', 'error');
+                    return;
+                }
+                if (data.errors && data.errors.length) console.warn(data.errors);
+                toast(data.message, 'success');
+                setTimeout(function () { location.reload(); }, 900);
+            }).catch(function () {
+                toast('导入请求失败', 'error');
+            }).finally(function () { btn.disabled = false; });
+        });
+    })();
+    document.querySelectorAll('[data-test]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var id = btn.getAttribute('data-test');
+            btn.disabled = true;
+            var oldText = btn.textContent;
+            btn.textContent = '测试中...';
+            fetch('{{ url_for('main.host_test', host_id=0) }}'.replace('/0/', '/' + id + '/'), {
+                method: 'POST', headers: {'Content-Type': 'application/json'}
+            }).then(function (r) { return r.json(); }).then(function (data) {
+                toast(data.message, data.ok ? 'success' : 'error');
+            }).catch(function () {
+                toast('测试请求失败', 'error');
+            }).finally(function () {
+                btn.disabled = false;
+                btn.textContent = oldText;
+            });
+        });
+    });
+</script>
+{% endblock %}
