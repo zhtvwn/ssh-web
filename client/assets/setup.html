@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <title>连接服务端</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0; padding: 28px 26px;
+            font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+            background: radial-gradient(circle at 20% 20%, #1e3a8a, #0f172a 60%);
+            color: #e2e8f0; height: 100vh;
+        }
+        .logo {
+            width: 44px; height: 44px; border-radius: 12px; margin-bottom: 14px;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; color: #fff; font-size: 18px;
+        }
+        h1 { font-size: 18px; margin: 0 0 6px; color: #fff; }
+        .sub { color: #94a3b8; font-size: 12.5px; margin-bottom: 18px; line-height: 1.6; }
+        label { display: block; font-size: 12px; color: #94a3b8; margin-bottom: 6px; }
+        input {
+            width: 100%; padding: 10px 12px; font-size: 13px; color: #e2e8f0;
+            background: #111c33; border: 1px solid #2b3a55; border-radius: 8px; outline: none;
+        }
+        input:focus { border-color: #4f8cff; }
+        .msg { margin-top: 10px; font-size: 12px; min-height: 18px; }
+        .msg.ok { color: #4ade80; }
+        .msg.err { color: #f87171; }
+        .actions { display: flex; gap: 10px; margin-top: 18px; }
+        button {
+            flex: 1; padding: 10px 12px; font-size: 13px; border-radius: 8px; cursor: pointer;
+            border: 1px solid #2b3a55; background: #1b2942; color: #cbd5e1;
+        }
+        button.primary { background: #2563eb; border-color: #2563eb; color: #fff; font-weight: 600; }
+        button:hover { filter: brightness(1.1); }
+        button:disabled { opacity: .6; cursor: not-allowed; }
+        .tip { margin-top: 16px; font-size: 11.5px; color: #64748b; line-height: 1.7; }
+        code { background: rgba(255,255,255,.08); padding: 1px 5px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div class="logo">&gt;_</div>
+    <h1>连接服务端</h1>
+    <div class="sub">客户端与服务端分离：请填写已部署的 ssh-web 服务端地址。<br>地址会保存在本机，下次自动进入。</div>
+
+    <label for="server">服务端地址</label>
+    <input id="server" type="text" placeholder="例如 http://192.168.1.10:5000" autofocus>
+
+    <div class="msg" id="msg"></div>
+
+    <div class="actions">
+        <button id="btnTest">测试连接</button>
+        <button id="btnSave" class="primary">保存并进入</button>
+    </div>
+
+    <div class="tip">
+        · 服务端可以是飞牛 NAS / 服务器 / 本机 Docker 部署的 ssh-web<br>
+        · 首次进入用服务端的管理员账号登录（默认由 <code>ADMIN_USERNAME</code> / <code>ADMIN_PASSWORD</code> 指定）<br>
+        · 需要更换地址时，点左侧菜单「切换服务器」
+    </div>
+
+<script>
+    var input = document.getElementById('server');
+    var msg = document.getElementById('msg');
+    var btnTest = document.getElementById('btnTest');
+    var btnSave = document.getElementById('btnSave');
+
+    function setMsg(text, ok) {
+        msg.textContent = text || '';
+        msg.className = 'msg' + (text ? (ok ? ' ok' : ' err') : '');
+    }
+
+    function busy(on) {
+        btnTest.disabled = on;
+        btnSave.disabled = on;
+    }
+
+    function current() {
+        try {
+            return window.pywebview.api.current_server() || '';
+        } catch (e) {
+            return '';
+        }
+    }
+
+    function probe() {
+        return window.pywebview.api.test_server(input.value.trim());
+    }
+
+    if (window.pywebview && window.pywebview.api) {
+        try {
+            input.value = current();
+        } catch (e) { /* 忽略 */ }
+    }
+
+    input.addEventListener('keydown', function (event) {
+        if (event.key === 'Enter') btnSave.click();
+    });
+
+    btnTest.addEventListener('click', function () {
+        setMsg('正在测试...', true);
+        busy(true);
+        probe().then(function (r) {
+            setMsg(r.message, r.ok);
+            busy(false);
+        }).catch(function (e) {
+            setMsg('测试失败：' + e, false);
+            busy(false);
+        });
+    });
+
+    btnSave.addEventListener('click', function () {
+        if (!input.value.trim()) {
+            setMsg('请填写服务端地址', false);
+            return;
+        }
+        setMsg('正在连接...', true);
+        busy(true);
+        window.pywebview.api.save_server(input.value.trim()).then(function (r) {
+            busy(false);
+            if (!r.ok) setMsg(r.message, false);
+        }).catch(function (e) {
+            setMsg('保存失败：' + e, false);
+            busy(false);
+        });
+    });
+</script>
+</body>
+</html>

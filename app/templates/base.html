@@ -38,6 +38,9 @@
             <a class="nav-item" href="{{ url_for('auth.profile') }}" data-nav="profile">
                 <span class="ico">⚙</span> 个人设置
             </a>
+            <a class="nav-item nav-desktop-only" href="javascript:void(0)" id="navSwitchServer">
+                <span class="ico">🌐</span> 切换服务器
+            </a>
         </nav>
         <div class="sidebar-footer">
             <div class="user-chip">
@@ -101,6 +104,20 @@
             el.classList.add('active');
         }
     });
+
+    // 仅在桌面客户端内（pywebview 注入了 api）显示「切换服务器」
+    (function () {
+        var item = document.getElementById('navSwitchServer');
+        if (!item) return;
+        var api = window.pywebview && window.pywebview.api;
+        if (!api || typeof api.change_server !== 'function') {
+            item.style.display = 'none';
+            return;
+        }
+        item.addEventListener('click', function () {
+            api.change_server().catch(function () { /* 忽略 */ });
+        });
+    })();
 </script>
 {% block scripts %}{% endblock %}
 </body>

@@ -95,6 +95,37 @@ python run.py               # http://127.0.0.1:5000
    - 还可「新建目录」「重命名」「删除」（删除需二次确认），上传下载与增删都会写入审计日志
 5. 「命令库」页面可维护自定义命令；「审计日志」可回溯所有人的操作记录（含文件操作）。
 
+## 桌面客户端（Windows 11 / macOS M 系列）
+
+采用**客户端 / 服务端分离**：服务端（本项目）部署在 NAS、服务器或 Docker 里；客户端只是一个薄壳浏览器窗口，负责打开服务端地址。
+
+| 平台 | 产物 | 说明 |
+| --- | --- | --- |
+| Windows 11（x64） | `ssh-web-client-windows-x64.zip` | 基于 WebView2（Win11 自带），解压后运行 `ssh-web-client.exe` |
+| macOS Apple Silicon（M1/M2/M3/M4） | `ssh-web-client-macos-arm64.zip` | 基于 WKWebView，解压后把 `ssh-web-client.app` 拖进「应用程序」 |
+
+### 使用
+1. 从 [Releases](../../releases) 下载对应平台的压缩包并解压
+2. 首次启动弹出「连接服务端」：填写服务端地址（如 `http://192.168.1.10:5000`），点「测试连接」验证，再「保存并进入」
+3. 地址保存在本机 `~/.ssh-web-client.json`，下次启动直接打开
+4. 需要更换地址时，点左侧菜单「切换服务器」（仅在客户端内可见）
+5. 服务端不可达时会自动回到地址设置页；提示「旧版服务端」时需升级服务端以获得 `/api/ping`
+
+### 本地打包
+```bash
+pip install -r client/requirements.txt
+# macOS（本机架构，M 系列即 arm64）
+pyinstaller --noconfirm --clean --onedir --windowed --name ssh-web-client \
+  --osx-bundle-identifier com.sshweb.client --add-data "client/assets:assets" \
+  --collect-all webview client/main.py
+# Windows（PowerShell）
+pyinstaller --noconfirm --clean --onedir --windowed --name ssh-web-client `
+  --add-data "client/assets;assets" --collect-all webview client/main.py
+```
+
+### 自动构建
+推送 `v*` 标签即触发 `.github/workflows/desktop-client.yml`，在 `windows-latest` 与 `macos-14`（arm64）上分别打包并自动上传到 Release；也可在 Actions 里手动 `Run workflow`。
+
 ## 版本与标签规范
 
 - 版本号遵循语义化版本 `vMAJOR.MINOR.PATCH`（**必须带 `v` 前缀**）：

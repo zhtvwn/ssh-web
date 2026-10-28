@@ -9,6 +9,9 @@ class Config:
     # 生产环境请通过环境变量注入，切勿使用默认值
     SECRET_KEY = os.environ.get("SECRET_KEY", "dev-secret-key-please-change")
 
+    # 供 /api/ping 与客户端展示使用
+    APP_VERSION = os.environ.get("APP_VERSION", "1.1.0")
+
     SQLALCHEMY_DATABASE_URI = os.environ.get(
         "DATABASE_URL", "sqlite:///" + os.path.join(DATA_DIR, "ssh_web.db")
     )

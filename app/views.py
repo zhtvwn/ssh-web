@@ -527,6 +527,17 @@ def api_history():
     return jsonify(out)
 
 
+@main_bp.route("/api/ping")
+def api_ping():
+    """桌面客户端连通性探测：无需登录，仅返回基本信息。"""
+    return jsonify({
+        "ok": True,
+        "app": "ssh-web",
+        "version": current_app.config.get("APP_VERSION", "1.1.0"),
+        "require_login": True,
+    })
+
+
 @main_bp.route("/api/snippets")
 @login_required
 def api_snippets():
