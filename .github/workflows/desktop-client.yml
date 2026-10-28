@@ -2,6 +2,11 @@ name: 桌面客户端构建
 
 on:
   workflow_dispatch:
+    inputs:
+      reason:
+        description: 手动构建原因（可选）
+        required: false
+        default: 手动触发
   push:
     tags:
       - "v*"
