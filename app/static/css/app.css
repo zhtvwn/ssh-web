@@ -382,6 +382,78 @@ code, pre { font-family: Menlo, Monaco, Consolas, "Courier New", monospace; }
     color: var(--text-muted); font-size: 12px; background: #fafbfd;
 }
 
+/* 远端文件面板（终端页底部） */
+.file-panel {
+    position: relative; flex: 0 0 auto; display: flex; flex-direction: column;
+    height: 280px; min-height: 180px; background: #0f1a2e; border-top: 1px solid #1e293b;
+}
+.file-head {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    padding: 8px 12px; border-bottom: 1px solid #1e293b;
+}
+.file-title { color: #e2e8f0; font-size: 13px; font-weight: 600; }
+.file-host {
+    color: #64748b; font-size: 12px; max-width: 300px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.file-pathbar { display: flex; align-items: center; gap: 6px; flex: 1; min-width: 220px; }
+.file-path {
+    flex: 1; min-width: 120px; background: #0b1220; border: 1px solid #334155; color: #e2e8f0;
+    border-radius: 8px; padding: 5px 10px; font-size: 12px; outline: none;
+    font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
+}
+.file-path:focus { border-color: #4f8cff; }
+.file-head .btn-ghost { background: #1e293b; color: #cbd5e1; border-color: #334155; }
+.file-head .btn-ghost:hover { background: #273449; color: #fff; }
+.file-ops { display: flex; gap: 6px; }
+
+.file-body { flex: 1; display: flex; min-height: 0; }
+.file-tree { width: 230px; flex-shrink: 0; overflow: auto; padding: 8px 6px; border-right: 1px solid #1e293b; }
+.ft-row {
+    display: flex; align-items: center; gap: 6px; padding: 4px 8px; border-radius: 6px;
+    cursor: pointer; color: #94a3b8; font-size: 12px; user-select: none;
+}
+.ft-row:hover { background: #18253f; color: #e2e8f0; }
+.ft-row.active { background: rgba(79, 140, 255, .18); color: #fff; }
+.ft-arrow { width: 12px; color: #64748b; flex-shrink: 0; }
+.ft-icon { flex-shrink: 0; }
+.ft-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ft-children { margin-left: 14px; padding-left: 4px; border-left: 1px dashed #24344f; }
+.ft-empty { color: #475569; font-size: 11px; padding: 6px 8px; }
+
+.file-list { flex: 1; min-width: 0; overflow: auto; }
+.file-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.file-table th {
+    position: sticky; top: 0; z-index: 1; background: #111c33; color: #64748b; font-weight: 600;
+    text-align: left; padding: 8px 10px; border-bottom: 1px solid #1e293b;
+}
+.file-table td { padding: 6px 10px; border-bottom: 1px solid #16223c; color: #cbd5e1; }
+.file-row:hover td { background: #16233c; }
+.file-row.is-dir .file-text { color: #7dd3fc; font-weight: 600; }
+.file-cell-name { max-width: 420px; }
+.file-icon { margin-right: 6px; }
+.file-text {
+    display: inline-block; vertical-align: middle; max-width: calc(100% - 28px);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.file-cell-size, .file-cell-time, .file-cell-mode {
+    color: #64748b; white-space: nowrap; font-family: Menlo, Monaco, Consolas, monospace;
+}
+.file-cell-ops { white-space: nowrap; }
+.file-cell-ops .btn + .btn { margin-left: 4px; }
+.file-empty { text-align: center; color: #475569; padding: 24px 0; }
+
+.file-foot {
+    padding: 6px 12px; border-top: 1px solid #1e293b; background: #0f1a2e; color: #64748b;
+    font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.file-drop {
+    position: absolute; left: 0; right: 0; top: 40px; bottom: 26px; display: none;
+    align-items: center; justify-content: center; z-index: 5; pointer-events: none;
+    background: rgba(79, 140, 255, .14); border: 2px dashed #4f8cff; color: #dbeafe; font-size: 14px;
+}
+.file-drop.show { display: flex; }
+
 /* ------------------------------ 登录页 ------------------------------ */
 
 .login-body {

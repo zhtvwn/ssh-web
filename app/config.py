@@ -40,3 +40,6 @@ class Config:
 
     # 登录失败锁定策略
     MAX_LOGIN_ATTEMPTS = int(os.environ.get("MAX_LOGIN_ATTEMPTS", "10"))
+
+    # 远端文件管理：单个上传请求的最大体积（MB）
+    FILE_MAX_UPLOAD_MB = int(os.environ.get("FILE_MAX_UPLOAD_MB", "200"))

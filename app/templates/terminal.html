@@ -27,6 +27,7 @@
             <button class="btn btn-ghost btn-sm" id="btnClear">清屏</button>
             <span class="toolbar-split"></span>
             <button class="btn btn-ghost btn-sm" id="btnToggleSide" title="显示/隐藏右侧命令库（Ctrl+Alt+B）">命令库</button>
+            <button class="btn btn-ghost btn-sm" id="btnToggleFiles" title="显示/隐藏底部远端文件（Ctrl+Alt+E）">文件</button>
             <label class="switch"><input type="checkbox" id="chkSuggest" checked> 输入提示</label>
             <span class="term-hint">切走菜单/刷新不会断连，回来自动恢复；Tab 补全 / ↑↓ 选择 / Esc 关闭；Ctrl+C 中断，右键粘贴</span>
         </div>
@@ -41,6 +42,44 @@
                 <div class="term-empty-icon">&gt;_</div>
                 <div>选择左侧主机后点击「新建连接」，可同时打开多个标签连接多台主机</div>
             </div>
+        </div>
+
+        <div class="file-panel" id="filePanel" style="display:none">
+            <div class="file-head">
+                <span class="file-title">远端文件</span>
+                <span class="file-host" id="fileHost">—</span>
+                <div class="file-pathbar">
+                    <button class="btn btn-sm btn-ghost" id="fileUp" title="上级目录">↑ 上级</button>
+                    <input class="file-path" id="filePath" spellcheck="false" placeholder="/">
+                    <button class="btn btn-sm btn-ghost" id="fileGo">转到</button>
+                    <button class="btn btn-sm btn-ghost" id="fileRefresh">刷新</button>
+                </div>
+                <div class="file-ops">
+                    <button class="btn btn-sm btn-primary" id="fileUploadBtn">上传</button>
+                    <button class="btn btn-sm btn-ghost" id="fileMkdir">新建目录</button>
+                    <button class="btn btn-sm btn-ghost" id="fileClose">收起</button>
+                </div>
+                <input type="file" id="fileInput" multiple hidden>
+            </div>
+            <div class="file-body" id="fileBody">
+                <div class="file-tree" id="fileTree"></div>
+                <div class="file-list" id="fileList">
+                    <table class="file-table">
+                        <thead>
+                        <tr>
+                            <th>名称</th>
+                            <th style="width:92px">大小</th>
+                            <th style="width:132px">修改时间</th>
+                            <th style="width:100px">权限</th>
+                            <th style="width:150px">操作</th>
+                        </tr>
+                        </thead>
+                        <tbody id="fileRows"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="file-foot" id="fileFoot">拖拽本地文件到此区域即可上传到当前目录</div>
+            <div class="file-drop" id="fileDrop"><span>松开即可上传到当前目录</span></div>
         </div>
 
         <div class="exec-panel" id="execPanel" style="display:none">
@@ -66,6 +105,32 @@
         </div>
     </aside>
 </div>
+
+<!-- 文本预览弹窗 -->
+<div class="modal" id="modal-file-view">
+    <div class="modal-mask" data-modal-close></div>
+    <div class="modal-panel modal-lg">
+        <div class="modal-header"><span id="fileViewName">文件预览</span><button class="modal-close" data-modal-close>×</button></div>
+        <div class="modal-body">
+            <pre class="log-output" id="fileViewContent"></pre>
+        </div>
+    </div>
+</div>
+
+<!-- 通用输入弹窗（新建目录 / 重命名） -->
+<div class="modal" id="modal-file-input">
+    <div class="modal-mask" data-modal-close></div>
+    <div class="modal-panel modal-sm">
+        <div class="modal-header"><span id="fileInputTitle">输入</span><button class="modal-close" data-modal-close>×</button></div>
+        <div class="modal-body">
+            <label class="field"><span id="fileInputLabel"></span><input id="fileInputValue"></label>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-ghost" data-modal-close>取消</button>
+                <button type="button" class="btn btn-primary" id="btnFileInputOk">确定</button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
@@ -79,4 +144,5 @@
     window.APP_AUTO_CONNECT = {{ auto_connect|tojson }};
 </script>
 <script src="{{ url_for('static', filename='js/terminal.js') }}"></script>
+<script src="{{ url_for('static', filename='js/files.js') }}"></script>
 {% endblock %}

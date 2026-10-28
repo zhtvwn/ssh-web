@@ -11,40 +11,9 @@ from flask import current_app, request
 from flask_login import current_user
 
 from . import db, socketio
-from .models import CommandLog, Host
+from .audit import log_action
+from .models import Host
 from .ssh_service import make_key, run_command, session_manager
-
-MAX_LOG_OUTPUT = 4000
-
-
-def _log(host, command, source="terminal", ok=True, output="", exit_code=None):
-    entry = CommandLog(
-        user_id=current_user.id if current_user.is_authenticated else None,
-        username=current_user.username if current_user.is_authenticated else "anonymous",
-        host_id=host.id if host else None,
-        host_label=host.endpoint if host else "",
-        command=(command or "")[:2000],
-        source=source,
-        ok=bool(ok),
-        output=(output or "")[:MAX_LOG_OUTPUT],
-        exit_code=exit_code,
-        created_at=dt.datetime.utcnow(),
-    )
-    db.session.add(entry)
-    max_logs = current_app.config.get("MAX_AUDIT_LOGS", 0)
-    if max_logs:
-        total = CommandLog.query.count()
-        if total > max_logs:
-            old_ids = (
-                db.session.query(CommandLog.id)
-                .order_by(CommandLog.id.asc())
-                .limit(total - max_logs)
-                .all()
-            )
-            db.session.query(CommandLog).filter(
-                CommandLog.id.in_([i[0] for i in old_ids])
-            ).delete(synchronize_session=False)
-    db.session.commit()
 
 
 def _accessible(host):
@@ -114,13 +83,13 @@ def on_ssh_start(data):
             timeout=current_app.config["SSH_CONNECT_TIMEOUT"],
         )
     except Exception as exc:  # noqa: BLE001
-        _log(host, "(建立连接)", source="connect", ok=False, output=str(exc))
+        log_action(host, "(建立连接)", source="connect", ok=False, output=str(exc))
         socketio.emit("ssh_error", {"session_id": session_id, "message": str(exc)}, to=sid)
         return
 
     host.last_used_at = dt.datetime.utcnow()
     db.session.commit()
-    _log(host, "(建立连接)", source="connect")
+    log_action(host, "(建立连接)", source="connect")
     socketio.emit(
         "ssh_ready",
         {"session_id": session_id, "host_id": host.id, "endpoint": host.endpoint, "name": host.name},
@@ -225,7 +194,7 @@ def on_ssh_exec(data):
         result = run_command(host, command, timeout=timeout)
     result.setdefault("duration", 0)
 
-    _log(host, command, source="quick", ok=result.get("ok"), exit_code=result.get("exit_code"),
+    log_action(host, command, source="quick", ok=result.get("ok"), exit_code=result.get("exit_code"),
          output=(result.get("error") or "") + "\n" + (result.get("output") or ""))
 
     socketio.emit(
@@ -252,4 +221,4 @@ def on_ssh_command_log(data):
         return
     host_id = int(data.get("host_id") or 0)
     host = db.session.get(Host, host_id) if host_id else None
-    _log(host, command, source="terminal")
+    log_action(host, command, source="terminal")

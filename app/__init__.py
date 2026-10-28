@@ -2,7 +2,7 @@ import os
 import threading
 import time
 
-from flask import Flask
+from flask import Flask, jsonify
 from flask_login import LoginManager
 from flask_socketio import SocketIO
 from flask_sqlalchemy import SQLAlchemy
@@ -65,11 +65,21 @@ def create_app():
 
     from . import sockets  # noqa: F401  注册 socketio 事件
     from .auth import auth_bp
+    from .files import files_bp
     from .views import main_bp
     from .models import ensure_default_admin, ensure_schema_patches, seed_builtin_commands
 
+    # 限制单次上传体积（拖拽上传多个文件时受此约束）
+    app.config["MAX_CONTENT_LENGTH"] = Config.FILE_MAX_UPLOAD_MB * 1024 * 1024
+
     app.register_blueprint(auth_bp)
     app.register_blueprint(main_bp)
+    app.register_blueprint(files_bp)
+
+    @app.errorhandler(413)
+    def _upload_too_large(error):  # pragma: no cover - 仅上传超限触发
+        return jsonify({"ok": False,
+                        "message": f"上传内容超过限制（{Config.FILE_MAX_UPLOAD_MB}MB），请分批上传"}), 413
 
     with app.app_context():
         db.create_all()

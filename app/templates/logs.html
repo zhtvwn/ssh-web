@@ -13,6 +13,7 @@
                 <option value="connect" {% if source == 'connect' %}selected{% endif %}>建立连接</option>
                 <option value="terminal" {% if source == 'terminal' %}selected{% endif %}>终端输入</option>
                 <option value="quick" {% if source == 'quick' %}selected{% endif %}>快速执行</option>
+                <option value="file" {% if source == 'file' %}selected{% endif %}>文件操作</option>
             </select>
             {% if current_user.is_admin %}
             <select name="user" onchange="this.form.submit()">
@@ -46,6 +47,7 @@
                 <td>
                     {% if log.source == 'connect' %}<span class="badge badge-info">连接</span>
                     {% elif log.source == 'quick' %}<span class="badge badge-warn">快速执行</span>
+                    {% elif log.source == 'file' %}<span class="badge badge-info">文件</span>
                     {% else %}<span class="badge">终端</span>{% endif %}
                 </td>
                 <td>{% if log.ok %}<span class="badge badge-ok">成功</span>{% else %}<span class="badge badge-danger">失败</span>{% endif %}</td>
@@ -96,7 +98,8 @@
                 document.getElementById('log-user').textContent = d.user;
                 document.getElementById('log-host').textContent = d.host || '-';
                 document.getElementById('log-time').textContent = d.created_at;
-                document.getElementById('log-source').textContent = {connect: '建立连接', quick: '快速执行', terminal: '终端输入'}[d.source] || d.source;
+                var sourceMap = {connect: '建立连接', quick: '快速执行', terminal: '终端输入', file: '文件操作'};
+                document.getElementById('log-source').textContent = sourceMap[d.source] || d.source;
                 document.getElementById('log-command').textContent = d.command;
                 document.getElementById('log-output').textContent = d.output || '（无输出）';
                 openModal('modal-log');

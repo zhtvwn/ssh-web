@@ -11,6 +11,10 @@
     var activeId = null;
     var seq = 0;
 
+    // 外部模块（如文件面板）订阅：激活标签变化、标签关闭
+    var activateHooks = [];
+    var closeHooks = [];
+
     // workspace 标识浏览器标签（存在 sessionStorage：切页保留、关闭标签即失效）
     var workspace = sessionStorage.getItem('sshWorkspace');
     if (!workspace) {
@@ -424,6 +428,15 @@
         s.term.focus();
         var label = {online: '已连接 ', busy: '连接中 ', offline: '未连接 ', error: '连接失败 '}[s.state] || '';
         setStatus(s.state, label + (s.state === 'online' ? s.host.endpoint : s.host.name));
+        activateHooks.forEach(function (cb) {
+            try { cb(activeInfo()); } catch (e) { /* 忽略外部回调异常 */ }
+        });
+    }
+
+    function activeInfo() {
+        var s = sessions[activeId];
+        return s ? {id: s.id, hostId: s.hostId, name: s.host.name, endpoint: s.host.endpoint,
+                    connected: s.connected} : null;
     }
 
     function fitSession(s) {
@@ -513,6 +526,9 @@
                 setStatus('idle', '未连接');
             }
         }
+        closeHooks.forEach(function (cb) {
+            try { cb(id, activeInfo()); } catch (e) { /* 忽略外部回调异常 */ }
+        });
     }
 
     /* --------------------------- 快速执行 --------------------------- */
@@ -747,6 +763,14 @@
     if (window.APP_AUTO_CONNECT && initHostId) {
         createSession(initHostId, true);
     }
+
+    /* 供文件面板等外部模块使用的最小接口 */
+    window.SSHTerm = {
+        getActive: activeInfo,
+        getHosts: function () { return hosts; },
+        onActivate: function (cb) { activateHooks.push(cb); if (activeId) cb(activeInfo()); },
+        onClose: function (cb) { closeHooks.push(cb); }
+    };
 
     // 页面离开：通知服务端进入宽限期，切页/刷新回来会自动重新接入，关闭浏览器则回收
     window.addEventListener('beforeunload', function () {
