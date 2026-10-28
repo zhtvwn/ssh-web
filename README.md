@@ -95,6 +95,25 @@ python run.py               # http://127.0.0.1:5000
    - 还可「新建目录」「重命名」「删除」（删除需二次确认），上传下载与增删都会写入审计日志
 5. 「命令库」页面可维护自定义命令；「审计日志」可回溯所有人的操作记录（含文件操作）。
 
+## 版本与标签规范
+
+- 版本号遵循语义化版本 `vMAJOR.MINOR.PATCH`（**必须带 `v` 前缀**）：
+  - `MAJOR`：不兼容的变更（数据结构/配置不兼容升级）
+  - `MINOR`：新增功能（向下兼容）
+  - `PATCH`：缺陷修复
+- 标签只打在 `main` 分支的最新提交上，且为 **附注标签**（`git tag -a`），不要使用轻量标签。
+- 发布流程：
+
+```bash
+git checkout main && git pull --rebase
+git tag -a v1.2.0 -m "v1.2.0：一句话说明本次变更"
+git push origin main && git push origin v1.2.0
+gh release create v1.2.0 --title "v1.2.0" --notes "变更说明"
+```
+
+- 已发布标签不再移动或删除；如需回滚，用新的 `PATCH` 版本修复，而不是改写历史。
+- 发布前自查：`pyflakes` 无告警、页面冒烟通过、`README` 与 `.env.example` 同步更新。
+
 ## 安全建议
 
 - 部署后立刻修改 `SECRET_KEY` 与管理员密码；不要使用默认口令。
