@@ -24,12 +24,12 @@
             <tbody>
             {% for u in users %}
             <tr>
-                <td class="cell-strong">{{ u.username }}{% if u.id == current_user.id %} <span class="badge badge-info">当前</span>{% endif %}</td>
-                <td>{% if u.is_admin %}<span class="badge badge-warn">管理员</span>{% else %}<span class="badge">普通用户</span>{% endif %}</td>
-                <td>{% if u.active %}<span class="badge badge-ok">启用</span>{% else %}<span class="badge badge-danger">禁用</span>{% endif %}</td>
-                <td>{{ u.hosts.count() }}</td>
-                <td>{{ u.remark or '-' }}</td>
-                <td>{{ u.last_login_at.strftime('%Y-%m-%d %H:%M') if u.last_login_at else '从未登录' }}</td>
+                <td data-label="用户名" class="cell-strong">{{ u.username }}{% if u.id == current_user.id %} <span class="badge badge-info">当前</span>{% endif %}</td>
+                <td data-label="角色">{% if u.is_admin %}<span class="badge badge-warn">管理员</span>{% else %}<span class="badge">普通用户</span>{% endif %}</td>
+                <td data-label="状态">{% if u.active %}<span class="badge badge-ok">启用</span>{% else %}<span class="badge badge-danger">禁用</span>{% endif %}</td>
+                <td data-label="主机数">{{ u.hosts.count() }}</td>
+                <td data-label="备注">{{ u.remark or '-' }}</td>
+                <td data-label="最近登录">{{ u.last_login_at.strftime('%Y-%m-%d %H:%M') if u.last_login_at else '从未登录' }}</td>
                 <td class="ops">
                     <button class="btn btn-sm btn-ghost"
                             data-modal-open="modal-user-edit"

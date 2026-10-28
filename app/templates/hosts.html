@@ -32,17 +32,17 @@
             <tbody>
             {% for h in hosts %}
             <tr>
-                <td>
+                <td data-label="名称">
                     <div class="cell-strong">{{ h.name }}</div>
                     <div class="cell-sub">{{ h.remark or '-' }}</div>
                 </td>
-                <td><code>{{ h.endpoint }}</code></td>
-                <td>{{ '密钥' if h.auth_type == 'key' else '密码' }}</td>
-                <td>
+                <td data-label="地址"><code>{{ h.endpoint }}</code></td>
+                <td data-label="认证">{{ '密钥' if h.auth_type == 'key' else '密码' }}</td>
+                <td data-label="归属">
                     {{ h.owner.username if h.owner else '-' }}
                     {% if h.shared %}<span class="badge badge-info">共享</span>{% endif %}
                 </td>
-                <td>{{ h.last_used_at.strftime('%Y-%m-%d %H:%M') if h.last_used_at else '从未' }}</td>
+                <td data-label="最近使用">{{ h.last_used_at.strftime('%Y-%m-%d %H:%M') if h.last_used_at else '从未' }}</td>
                 <td class="ops">
                     <a class="btn btn-sm btn-primary" href="{{ url_for('main.terminal', host=h.id) }}">连接</a>
                     <button class="btn btn-sm btn-ghost" data-test="{{ h.id }}">测试</button>

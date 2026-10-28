@@ -53,6 +53,7 @@
 
     <div class="main">
         <header class="topbar">
+            <button class="btn-nav-toggle" id="btnNavToggle" aria-label="菜单">☰</button>
             <div class="topbar-title">{% block page_title %}{{ app_name }}{% endblock %}</div>
             <div class="topbar-right">
                 {% block topbar_actions %}{% endblock %}
@@ -72,6 +73,7 @@
         </main>
     </div>
 </div>
+<div class="nav-mask" id="navMask"></div>
 
 <script>
     window.HOST_UPDATE_URL = "{{ url_for('main.host_update', host_id=0) }}".replace('/0/', '/__ID__/');

@@ -18,6 +18,29 @@ function toast(message, type) {
     }, 2600);
 }
 
+/* 移动端侧边栏抽屉 */
+(function () {
+    var sidebar = document.querySelector('.sidebar');
+    var toggle = document.getElementById('btnNavToggle');
+    var mask = document.getElementById('navMask');
+
+    function setNav(open) {
+        if (!sidebar) return;
+        sidebar.classList.toggle('open', open);
+        if (mask) mask.classList.toggle('open', open);
+    }
+
+    if (toggle) {
+        toggle.addEventListener('click', function () {
+            setNav(!sidebar.classList.contains('open'));
+        });
+    }
+    if (mask) mask.addEventListener('click', function () { setNav(false); });
+    document.querySelectorAll('.nav-item').forEach(function (el) {
+        el.addEventListener('click', function () { setNav(false); });
+    });
+})();
+
 function openModal(id) {
     var modal = document.getElementById(id);
     if (!modal) return;

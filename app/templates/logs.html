@@ -40,18 +40,18 @@
             <tbody>
             {% for log in logs %}
             <tr>
-                <td>{{ log.created_at.strftime('%Y-%m-%d %H:%M:%S') if log.created_at else '-' }}</td>
-                <td>{{ log.username }}</td>
-                <td><code>{{ log.host_label or '-' }}</code></td>
-                <td class="cmd-cell" title="{{ log.command }}">{{ log.command }}</td>
-                <td>
+                <td data-label="时间">{{ log.created_at.strftime('%Y-%m-%d %H:%M:%S') if log.created_at else '-' }}</td>
+                <td data-label="用户">{{ log.username }}</td>
+                <td data-label="主机"><code>{{ log.host_label or '-' }}</code></td>
+                <td data-label="命令" class="cmd-cell" title="{{ log.command }}">{{ log.command }}</td>
+                <td data-label="类型">
                     {% if log.source == 'connect' %}<span class="badge badge-info">连接</span>
                     {% elif log.source == 'quick' %}<span class="badge badge-warn">快速执行</span>
                     {% elif log.source == 'file' %}<span class="badge badge-info">文件</span>
                     {% else %}<span class="badge">终端</span>{% endif %}
                 </td>
-                <td>{% if log.ok %}<span class="badge badge-ok">成功</span>{% else %}<span class="badge badge-danger">失败</span>{% endif %}</td>
-                <td><button class="btn btn-sm btn-ghost" data-log="{{ log.id }}">详情</button></td>
+                <td data-label="结果">{% if log.ok %}<span class="badge badge-ok">成功</span>{% else %}<span class="badge badge-danger">失败</span>{% endif %}</td>
+                <td data-label="操作" class="ops"><button class="btn btn-sm btn-ghost" data-log="{{ log.id }}">详情</button></td>
             </tr>
             {% else %}
             <tr><td colspan="7" class="empty">暂无记录</td></tr>

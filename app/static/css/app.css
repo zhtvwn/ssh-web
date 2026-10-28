@@ -471,15 +471,90 @@ code, pre { font-family: Menlo, Monaco, Consolas, "Courier New", monospace; }
 .login-tip { color: var(--text-muted); font-size: 12px; margin: 18px 0 0; }
 .login-tip code { background: #f1f5f9; padding: 1px 5px; border-radius: 4px; }
 
+/* ------------------------------ 多端适配 ------------------------------ */
+
+.btn-nav-toggle { display: none; }
+.nav-mask { display: none; }
+
+/* 平板：终端区改为上下布局 */
 @media (max-width: 1100px) {
     .term-wrap { flex-direction: column; height: auto; }
-    .term-side { width: 100%; max-height: 360px; }
-    .term-main { min-height: 480px; }
+    .term-side { width: 100%; max-height: 320px; }
+    .term-main { min-height: 460px; }
 }
+
+/* 小屏 / 手机：顶栏与表格适配 */
+@media (max-width: 820px) {
+    .topbar { padding: 0 12px; }
+    .topbar-title {
+        font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .topbar-right { flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
+    .content { padding: 12px; }
+    .card-header-flex { flex-direction: column; align-items: stretch; gap: 10px; }
+    .inline-search { width: 100%; }
+    .inline-search input, .inline-search select { flex: 1 1 auto; min-width: 0; }
+    .grid-2 { grid-template-columns: 1fr; }
+    .pager-bar { flex-wrap: wrap; gap: 8px; }
+
+    /* 表格卡片化：隐藏表头，用 data-label 作为行内标签 */
+    .table thead { display: none; }
+    .table, .table tbody, .table tr, .table td { display: block; width: 100%; }
+    .table tr { border-bottom: 1px solid var(--border); padding: 10px 12px; }
+    .table tbody tr:last-child { border-bottom: none; }
+    .table td { border: none; padding: 3px 0; white-space: normal; }
+    .table td::before {
+        content: attr(data-label);
+        display: inline-block; width: 68px; margin-right: 6px;
+        color: var(--text-muted); font-size: 12px; vertical-align: top;
+    }
+    .table td.ops { display: flex; flex-wrap: wrap; gap: 6px; padding-top: 8px; }
+    .table td.ops::before { display: none; }
+    .cmd-cell { max-width: none; white-space: normal; word-break: break-all; }
+
+    /* 弹窗与表单 */
+    .modal-panel { width: calc(100vw - 24px); max-height: 88vh; }
+    .modal-body { max-height: calc(88vh - 54px); overflow-y: auto; }
+    .modal-lg, .modal-sm { width: calc(100vw - 24px); }
+
+    /* 终端页 */
+    .term-toolbar { flex-wrap: wrap; row-gap: 6px; }
+    .term-toolbar .select { max-width: 100%; flex: 1 1 160px; min-width: 0; }
+    .term-hint, .side-footer { display: none; }
+    .exec-panel { max-height: 45%; }
+    .term-tabs { padding: 6px 8px; }
+    .tab { max-width: 160px; }
+}
+
+/* 手机：侧边栏改为抽屉 */
 @media (max-width: 768px) {
     .layout { flex-direction: column; }
-    .sidebar { width: 100%; flex-direction: row; align-items: center; gap: 12px; overflow-x: auto; }
-    .nav { flex-direction: row; }
-    .sidebar-footer { border: none; padding: 0; }
-    .user-chip { display: none; }
+    .sidebar {
+        position: fixed; top: 0; bottom: 0; left: 0; width: 244px; z-index: 70;
+        flex-direction: column; align-items: stretch; gap: 0;
+        overflow-x: visible; overflow-y: auto;
+        transform: translateX(-100%); transition: transform .22s ease;
+    }
+    .sidebar.open { transform: none; }
+    .nav { flex-direction: column; }
+    .sidebar-footer { border-top: 1px solid rgba(255, 255, 255, .08); padding-top: 14px; }
+    .user-chip { display: flex; }
+    .nav-mask.open {
+        display: block; position: fixed; inset: 0;
+        background: rgba(2, 6, 23, .5); z-index: 65;
+    }
+    .btn-nav-toggle {
+        display: inline-flex; align-items: center; justify-content: center;
+        flex-shrink: 0; width: 34px; height: 34px; margin-right: 8px;
+        border: 1px solid var(--border); border-radius: 8px;
+        background: #fff; color: var(--text); font-size: 16px; cursor: pointer;
+    }
+    .login-card { padding: 24px 20px; }
+}
+
+/* 触屏设备：去掉 hover 依赖，按钮更好点 */
+@media (hover: none) {
+    .btn { min-height: 34px; }
+    .btn-sm { min-height: 30px; }
+    .tab { padding: 8px 10px; }
 }
